@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import React, { useRef } from "react";
+import enemy_ship from '../assets/enemy_ship1.png';
+import explocion from '../assets/explotion.gif';
 import Style from './App.module.css';
 
 function App()
@@ -10,6 +12,7 @@ function App()
   const [ numberIntervalId, setNumberIntervalId ] = useState( 0 );
   const [ show, setShow ] = useState( false );
   const [ name, setName ] = useState( '' );
+  const [ explotion, setExplotion ] = useState( false );
   const [ highScore, setHighScore ] = useState(
     [
       { name: '', score: 10 },
@@ -19,7 +22,7 @@ function App()
       { name: '', score: 10 },
     ] );
   const [ coordinates, setCoordinates ] = useState(
-    { backgroundColor: 'red', color: "blue", top: 100, left: 100, position: "relative" } )
+    { transition: "all 0.35s ease", height: 50, width: 50, top: 100, left: 100, position: "relative", transform: "rotate(45deg)" } )
     
     useEffect( () => // Checks if there is a highscore localStorage value, if there isn't- it starts it up.
     {
@@ -87,7 +90,7 @@ function App()
 
   const pause = () =>
   {
-    setShow(false);
+    victory();
     let puntuacion = segs + mSegs/100;
     let toCheck = { name: name, score: puntuacion}
     let aux = {name: '', score: 0};
@@ -115,8 +118,19 @@ function App()
     {
       let newTop = Math.floor( Math.random() * ( 249 - 3 + 1) ) + 3;
       let newLeft = Math.floor( Math.random() * ( 103 - (-103) + 1 ) ) + (-103);
-      setCoordinates( { backgroundColor: 'red', color: "blue", top: newTop, left: newLeft, position: "relative" } )
-    }, 275)
+      let newRotation = 0;
+      if( newTop<125 && newLeft<0 || newTop>=125 && newLeft>=0 )
+      {
+        newRotation = 0;
+      }
+      else
+      {
+        newRotation = 90;
+      }
+      // let newRotation = Math.floor( Math.random() * ( 90 - 0 + 1 ) ) + 0;
+            
+      setCoordinates( { transition: "all 0.35s ease", height: 50, width: 50, top: newTop, left: newLeft, position: "relative", transform: `rotate(${newRotation}deg)` } )
+    }, 350)
 
     setNumberIntervalId( numberInterval );
   }
@@ -128,24 +142,36 @@ function App()
 
     return names[ Math.floor( Math.random() * ( 9 - 0 + 1 ) + 0 ) ];
   }
+
+  const victory = () =>
+  {
+    setExplotion(true);
+
+    setTimeout( () =>
+    {
+      setShow( false );
+      setExplotion( false);
+    }, 750)
+  };
   
   return (
-    <main >
+    <main className={Style.general}>
 
       <header className={Style.header}>
-        <h1> Timer: {segs}.{String(mSegs).padStart(2, '0')} </h1>
+        <label className={ Style.white }> JUGADOR: </label>
+        {!show && <input className={ Style.centrado } onChange={(e)=>setName(e.target.value.toUpperCase())} value={name}/>}
+        {show && <input value={name} disabled/>}
       </header>
 
       <div>
-        <label> JUGADOR: </label>
-        {!show && <input onChange={(e)=>setName(e.target.value.toUpperCase())} value={name}/>}
-        {show && <input value={name} disabled/>}
+        <h1 className={Style.white}> Timer: {segs}.{String(mSegs).padStart(2, '0')} </h1>
       </div>
 
       <article>
 
-        <div className={ Style.contenedor } ref={ref} onDoubleClick={handleClick} onMouseDown={handleMouseDown}>
-          {show && <button style={ coordinates } onClick={pause}> HOLA </button>}
+        <div className={ show ? Style.space : Style.background } ref={ref} onDoubleClick={handleClick} onMouseDown={handleMouseDown}>
+          {(show && !explotion)&& <img src={enemy_ship} alt='Nave enemiga' style={ coordinates } onClick={pause} /> }
+          {(show && explotion) && <img src={explocion} alt='Nave enemiga explotando' style={ coordinates } />}
           {(!show && name=='') && <button style={ { color: "GrayText", top: 125, left: 0, position: "relative" } } onClick={()=>alert('Escriba su nombre')} > Jugar </button>}
           {(!show && name!='') && <button style={ { top: 125, left: 0, position: "relative" } } onClick={startGame}> Jugar </button>}
         </div>
@@ -154,18 +180,20 @@ function App()
       </article>
       
       <footer>
-        <table>
+        <table className={Style.white}>
 
-          <thead>
+          <thead >
             <tr>
-              <th> Nombre </th>
-              <th> Puntos </th>
+              <th> Puesto - </th>
+              <th> - Nombre - </th>
+              <th> - Segundos </th>
             </tr>
           </thead>
 
           <tbody>
             {highScore.length>0 && highScore.map( (item, y) => (
               <tr key={y}>
+                <td> {y+1}° </td>
                 <td> {item.name} </td>
                 <td> {item.score} </td>
               </tr>
